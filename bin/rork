@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require 'rork'
+
+begin
+	Parser.parse
+	Controller.run ARGV[0]
+rescue Exception => e
+	puts e.to_s
+end
