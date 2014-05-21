@@ -17,6 +17,6 @@ Gem::Specification.new do |s|
 		Dir['bin/*'] + Dir['lib/*.rb'] + Dir['lib/*/*.rb']
 
 	s.author		= 'gyf1214'
-	s.email			= 'gyf_1214@163.com'
+	s.email			= 'gyf1214@gmail.com'
 	s.homepage		= 'https://github.com/gyf1214/rork'
 end
