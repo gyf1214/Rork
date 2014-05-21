@@ -1,4 +1,4 @@
-Gem::Specifaction.new do |s|
+Gem::Specification.new do |s|
 	s.name			= 'rork'
 	s.version		= '0.1.0'
 	s.summary		= 'ruby fork'
