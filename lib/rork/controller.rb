@@ -1,47 +1,44 @@
 module Controller
-	private
+	class Application
+		attr_accessor :pid, :log, :err, :cmd
 
-	def self.module_attr *names
-		names.each do |name|
-			instance_eval %{
-				def #{name}
-					@#{name}
-				end
-
-				def #{name}= arg
-					@#{name} = arg
-				end
-			}
+		def initialize
+			@err = @log = '/dev/null'
 		end
 	end
 
-	public
-
 	module_function
 
-	@err = @log = '/dev/null'
+	@apps = Hash.new
+	def [] key
+		@apps[key] = Application.new unless @apps.key? key
+		@apps[key]
+	end
 
-	module_attr :pid, :log, :err, :cmd
-
-	def start
+	def start args = []
 		begin
-			puts 'Starting daemon'
+			args[0] = 'default' if args[0].nil?
+			@app = @apps[args[0]]
+			raise "Daemon #{args[0]} not found!" if @app.nil?
 
-			raise 'Daemon already running!' if File.exist? @pid
+			puts "Starting daemon #{args[0]}..."
+			raise "Pid file must be given for #{args[0]}!" if @app.pid.nil?
+			raise "Command must be given for #{args[0]}!" if @app.cmd.nil?
+			raise "Daemon #{args[0]} already running!" if File.exist? @app.pid
 
 			id = Process.fork do
 				Process.setsid
 				STDIN.reopen '/dev/null', 'r'
-				STDOUT.reopen @log, 'a'
-				STDERR.reopen @err, 'a'
+				STDOUT.reopen @app.log, 'a'
+				STDERR.reopen @app.err, 'a'
 				STDOUT.sync = true
 				STDERR.sync = true
-				exec @cmd
+				exec @app.cmd
 			end
 
 			raise 'Fork failed!' if id.nil?
 
-			File.open @pid, 'w' do |file|
+			File.open @app.pid, 'w' do |file|
 				file << id
 			end
 		rescue Exception => e
@@ -53,17 +50,22 @@ module Controller
 		puts '[Success]'
 	end
 
-	def stop
+	def stop args = []
 		begin
-			puts 'Stopping daemon'
+			args[0] = 'default' if args[0].nil?
+			@app = @apps[args[0]]
+			raise "Daemon #{args[0]} not found!" if @app.nil?
 
-			raise 'Daemon not running!' unless File.exist? @pid
+			puts "Stopping daemon #{args[0]}..."
+			raise "Pid file must be given for #{args[0]}!" if @app.pid.nil?
+			raise "Daemon #{args[0]}not running!" unless File.exist? @app.pid
 
-			id = File.read @pid
+			id = File.read @app.pid
+			id = id.to_i
 
-			Process.kill 'TERM', id.to_i
+			Process.kill 'TERM', id
 
-			File.delete @pid
+			File.delete @app.pid
 		rescue Exception => e
 			puts '[Failed]'
 			puts e.to_s
@@ -73,7 +75,7 @@ module Controller
 		puts '[Success]'
 	end
 
-	def run cmd
+	def run cmd, args = []
 		cmds = {
 			'start' => :start,
 			'stop' => :stop
@@ -81,6 +83,6 @@ module Controller
 
 		raise "Unknown command #{cmd}" if cmds[cmd].nil?
 
-		send cmds[cmd]
+		send cmds[cmd], args
 	end
 end

@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
 	s.name			= 'rork'
-	s.version		= '0.1.0'
+	s.version		= '0.2.0'
 	s.summary		= 'ruby fork'
 	s.description	= 'Run applications as daemon with ruby.'
 	s.license		= 'MIT'
